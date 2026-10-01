@@ -9,6 +9,7 @@
 		<script type="text/javascript">
 			document.addEventListener('DOMContentLoaded', function() {
 				function a() {
+					console.log("a");
 					try {
 						window.webkit.messageHandlers.PBIGRLF.postMessage({
 							enter: ""
@@ -28,6 +29,7 @@
 						console.log(arr);
 						const dic = arr[0];
 						if (Object.hasOwn(dic, 'a')) {
+							console.log("b");
 							try {
 								window.webkit.messageHandlers.PBIGRLF.postMessage({
 									ui: dic
