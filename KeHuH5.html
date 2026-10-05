@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#ffffff" />
+  <title></title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; background: #f5f5f5; }
+    .page { min-height: 100vh; background: linear-gradient(180deg, #2473ea 0 106px, #f5f5f5 106px 100%); }
+    .header { padding: 24px 14px 18px; }
+    .search-row { display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 8px; align-items: center; }
+    .search-input { height: 36px; width: 100%; border: 0; border-radius: 4px; background: #fff; padding: 0 12px; font-size: 14px; color: #111; outline: none; }
+    .search-btn { height: 36px; width: 36px; border: 0; border-radius: 4px; background: #fff; color: #111; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+    .main { display: grid; gap: 16px; padding: 14px; }
+    .state { padding: 48px 16px; text-align: center; font-size: 14px; color: #7d8394; }
+    .state-title { margin: 0 0 8px; font-size: 16px; color: #1f2430; font-weight: 700; }
+    .state-msg { margin: 0; line-height: 1.5; word-break: break-word; }
+    .retry-btn { margin-top: 16px; height: 34px; border: 0; border-radius: 4px; background: #2473ea; color: #fff; font-size: 14px; font-weight: 700; padding: 0 18px; cursor: pointer; }
+    .card { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 16px; align-items: start; background: #fff; padding: 18px 16px; border-radius: 8px; box-shadow: 0 8px 26px rgba(26, 35, 57, 0.08); }
+    .card img { width: 62px; height: 62px; object-fit: cover; background: #dde3ef; }
+    .card-title { margin: 0; font-size: 17px; line-height: 1.35; font-weight: 800; color: #000; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-time { margin: 12px 0 0; font-size: 12px; color: #a1a5b3; line-height: 1.2; }
+    .hidden { display: none !important; }
+    .mask { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.58); padding: 310px 16px 0; }
+    .modal { max-width: 377px; margin: 0 auto; background: #fff; border-radius: 18px; padding: 18px 16px 26px; box-shadow: 0 20px 60px rgba(0,0,0,.22); }
+    .modal-close { display: flex; justify-content: flex-end; }
+    .icon-btn { width: 28px; height: 28px; border: 0; background: transparent; color: #c6ccd7; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .verify-wrap { padding: 64px 0 88px; }
+    .track { position: relative; width: 302px; height: 40px; margin: 0 auto; overflow: hidden; border-radius: 4px; background: #f2f3f7; }
+    .track-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px; background: linear-gradient(90deg,#0e63ff 0%,#1e7cff 100%); width: 40px; transition: width .2s; }
+    .track-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #4a4f59; line-height: 1; }
+    .track-text.verified { color: #fff; }
+    .knob { position: absolute; left: 0; top: 0; z-index: 2; width: 40px; height: 40px; border: 0; background: #0e63ff; color: #fff; touch-action: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform .2s; }
+    .message-mask { position: fixed; inset: 0; z-index: 70; background: rgba(0,0,0,.58); display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+    .message-panel { width: min(100%,320px); background: #fff; border-radius: 12px; padding: 20px 18px 16px; box-shadow: 0 20px 60px rgba(0,0,0,.22); text-align: center; }
+    .message-title { margin: 0 0 10px; font-size: 16px; font-weight: 700; color: #1f2430; }
+    .message-text { margin: 0; font-size: 14px; line-height: 1.5; color: #4a4f59; word-break: break-word; }
+    .message-btn { width: 100%; margin-top: 18px; height: 38px; border: 0; border-radius: 6px; background: #2473ea; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="search-row">
+        <input id="searchInput" class="search-input" type="search" placeholder="Search" />
+        <button id="searchBtn" class="search-btn" type="button" aria-label="Search">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"></circle>
+            <path d="M16 16L20 20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+    <main id="main" class="main"></main>
+  </div>
+
+  <div id="verifyMask" class="mask hidden">
+    <div class="modal">
+      <div class="modal-close"><button id="verifyClose" class="icon-btn" type="button" aria-label="Close">✕</button></div>
+      <div class="verify-wrap">
+        <div id="track" class="track">
+          <div id="trackFill" class="track-fill"></div>
+          <div id="trackText" class="track-text">Swiping to the right side</div>
+          <button id="knob" class="knob" type="button" aria-label="Slide">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 6L15 12L9 18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="messageMask" class="message-mask hidden">
+    <div class="message-panel">
+      <p class="message-title">Tip</p>
+      <p id="messageText" class="message-text"></p>
+      <button id="messageOk" class="message-btn" type="button">OK</button>
+    </div>
+  </div>
+
+  <script>
+    const EMBEDDED_NEWS = [{"id": 1, "title": "BitGo says asset servicing is the real barrier to tokenized securities", "logo": "https://content-media.investing.com/news/LYNXMPEM18116_1200_L.jpg", "desc": "Investing.com -- Custody of the tokens themselves is largely a solved problem, but the real barrier to moving tokenized...", "link": "https://www.investing.com/news/cryptocurrency-news/bitgo-says-asset-servicing-is-the-real-barrier-to-tokenized-securities-4913704", "keywords": "BitGo says asset servicing is the real barrier to tokenized securities", "summary": "Investing.com -- Custody of the tokens themselves is largely a solved problem, but the real barrier to moving tokenized...", "created_at": "Sep 24, 2026", "updated_at": "Sep 24, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 24, 2026", "updated_at": "Sep 24, 2026"}}, {"id": 2, "title": "BTCC Exchange and Markets.com Announce Promotional Collaboration Ahead of TOKEN2049 Singapore", "logo": "https://content-media.investing.com/news/Cryptocurrencies_800x533_L_1556528002.jpg", "desc": "GEORGE TOWN, Cayman Islands, September 23rd, 2026, Chainwire\nBTCC, one of the world’s longest-serving cryptocurrency...", "link": "https://www.investing.com/news/cryptocurrency-news/btcc-exchange-and-marketscom-announce-promotional-collaboration-ahead-of-token2049-singapore-4913473", "keywords": "BTCC Exchange and Markets.com Announce Promotional Collaboration Ahead of TOKEN2049 Singapore", "summary": "GEORGE TOWN, Cayman Islands, September 23rd, 2026, Chainwire\nBTCC, one of the world’s longest-serving cryptocurrency...", "created_at": "Sep 24, 2026", "updated_at": "Sep 24, 2026", "author": "Chainwire", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 24, 2026", "updated_at": "Sep 24, 2026"}}, {"id": 3, "title": "Bitcoin steadies below $86k as ETF inflows soar; Trump-Xi summit in focus", "logo": "https://content-media.investing.com/news/moved_LYNXMPEI10187_L.jpg", "desc": "Investing.com-- Bitcoin steadied on Wednesday, remaining close to recent eight-month peaks as improving capital flows into...", "link": "https://www.investing.com/news/cryptocurrency-news/bitcoin-steady-near-87k-as-etf-inflows-soar-trumpxi-summit-in-focus-4912118", "keywords": "Bitcoin steadies below $86k as ETF inflows soar; Trump-Xi summit in focus", "summary": "Investing.com-- Bitcoin steadied on Wednesday, remaining close to recent eight-month peaks as improving capital flows into...", "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026"}}, {"id": 4, "title": "Travala Launches Permanent AVA Strategic Reserve, Doubles Monthly Open-Market Buybacks", "logo": "https://content-media.investing.com/news/Cryptocurrencies_800x533_L_1556528029.jpg", "desc": "Singapore, Singapore, September 23rd, 2026, Chainwire\nMore travel bookings → more member givebacks → more open-market...", "link": "https://www.investing.com/news/cryptocurrency-news/travala-launches-permanent-ava-strategic-reserve-doubles-monthly-openmarket-buybacks-4912992", "keywords": "Travala Launches Permanent AVA Strategic Reserve, Doubles Monthly Open-Market Buybacks", "summary": "Singapore, Singapore, September 23rd, 2026, Chainwire\nMore travel bookings → more member givebacks → more open-market...", "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026", "author": "Chainwire", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026"}}, {"id": 5, "title": "Analyst says Bitcoin bull market is underway and sets 2029 target", "logo": "https://content-media.investing.com/news/moved_LYNXNPEL260TM_L.jpg", "desc": "Investing.com -- Brokerage firm U.S. Tiger Securities said Bitcoin has entered a new bull-market regime, maintaining a Buy rating...", "link": "https://www.investing.com/news/cryptocurrency-news/analyst-says-bitcoin-bull-market-is-underway-and-sets-2029-target-4912571", "keywords": "Analyst says Bitcoin bull market is underway and sets 2029 target", "summary": "Investing.com -- Brokerage firm U.S. Tiger Securities said Bitcoin has entered a new bull-market regime, maintaining a Buy rating...", "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026"}}, {"id": 6, "title": "Cregis Marks Two Years of Middle East Growth as Traditional Financial Firms Drive Adoption", "logo": "https://content-media.investing.com/news/Cryptocurrencies_800x533_L_1556528132.jpg", "desc": "Hong Kong, CHINA, September 23rd, 2026, Chainwire\nCregis, an enterprise digital asset infrastructure platform, is marking two...", "link": "https://www.investing.com/news/cryptocurrency-news/cregis-marks-two-years-of-middle-east-growth-as-traditional-financial-firms-drive-adoption-4912208", "keywords": "Cregis Marks Two Years of Middle East Growth as Traditional Financial Firms Drive Adoption", "summary": "Hong Kong, CHINA, September 23rd, 2026, Chainwire\nCregis, an enterprise digital asset infrastructure platform, is marking two...", "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026", "author": "Chainwire", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026"}}, {"id": 7, "title": "Bitcoin pulls back from overbought highs at $86,388: Live levels", "logo": "https://content-media.investing.com/news/LYNXMPEDB60BK_L.jpg", "desc": "Latest update: Sep 23, 2026, 07:11 AM UTCThis article is regularly updated during market hours\nOn the 5-hour chart, Bitcoin just...", "link": "https://www.investing.com/news/cryptocurrency-news/bitcoin-tests-double-top-at-82179-with-mfi-maxed-live-levels-93CH-4908352", "keywords": "Bitcoin pulls back from overbought highs at $86,388: Live levels", "summary": "Latest update: Sep 23, 2026, 07:11 AM UTCThis article is regularly updated during market hours\nOn the 5-hour chart, Bitcoin just...", "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026"}}, {"id": 8, "title": "Bitcoin takes a breather, halting a big rally that briefly took it above $87k", "logo": "https://content-media.investing.com/news/moved_LYNXMPEI5E01G_L.jpg", "desc": "Investing.com -- Bitcoin ticked slightly lower on Tuesday, taking a breather after a big rally that briefly took it above $87,000...", "link": "https://www.investing.com/news/cryptocurrency-news/bitcoin-surges-past-85k-as-strategy-buys-more-coins-4909921", "keywords": "Bitcoin takes a breather, halting a big rally that briefly took it above $87k", "summary": "Investing.com -- Bitcoin ticked slightly lower on Tuesday, taking a breather after a big rally that briefly took it above $87,000...", "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 23, 2026", "updated_at": "Sep 23, 2026"}}, {"id": 9, "title": "EOS Climbs 12% As Investors Gain Confidence", "logo": "https://content-media.investing.com/news/Eos_800x533_L_1556445015.jpg", "desc": "Investing.com - EOS was trading at $0.0953 by 14:01 (18:01 GMT) on the Investing.com Index on Tuesday, up 12.12% on the day. It...", "link": "https://www.investing.com/news/cryptocurrency-news/eos-climbs-12-as-investors-gain-confidence-4911434", "keywords": "EOS Climbs 12% As Investors Gain Confidence", "summary": "Investing.com - EOS was trading at $0.0953 by 14:01 (18:01 GMT) on the Investing.com Index on Tuesday, up 12.12% on the day. It...", "created_at": "Sep 22, 2026", "updated_at": "Sep 22, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 22, 2026", "updated_at": "Sep 22, 2026"}}, {"id": 10, "title": "Farmhouse holds 15.709 Bitcoin with $347K in unrealized gains", "logo": "https://content-media.investing.com/news/ManiThawani_800x533_L_1662021369.jpg", "desc": "Farmhouse, Inc. (FMHS) announced it has accumulated 15.709 Bitcoin through 20 separate purchases, with a market value of...", "link": "https://www.investing.com/news/cryptocurrency-news/farmhouse-holds-15709-bitcoin-with-347k-in-unrealized-gains-432SI-4911044", "keywords": "Farmhouse holds 15.709 Bitcoin with $347K in unrealized gains", "summary": "Farmhouse, Inc. (FMHS) announced it has accumulated 15.709 Bitcoin through 20 separate purchases, with a market value of...", "created_at": "Sep 22, 2026", "updated_at": "Sep 22, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 22, 2026", "updated_at": "Sep 22, 2026"}}, {"id": 11, "title": "Margex Launches $2.7M ETH Airdrop Campaign Celebrating 4 Years of Proof of Stake", "logo": "https://content-media.investing.com/news/Ethereum_800x533_L_1556445146.jpg", "desc": "Victoria, Seychelles, September 22nd, 2026, Chainwire\nMargex, a specialized digital asset trading platform powered by proprietary...", "link": "https://www.investing.com/news/cryptocurrency-news/margex-launches-27m-eth-airdrop-campaign-celebrating-4-years-of-proof-of-stake-4910148", "keywords": "Margex Launches $2.7M ETH Airdrop Campaign Celebrating 4 Years of Proof of Stake", "summary": "Victoria, Seychelles, September 22nd, 2026, Chainwire\nMargex, a specialized digital asset trading platform powered by proprietary...", "created_at": "Sep 22, 2026", "updated_at": "Sep 22, 2026", "author": "Chainwire", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 22, 2026", "updated_at": "Sep 22, 2026"}}, {"id": 12, "title": "CloudTech Powers Institutional-Grade Digital Asset Trading for Australian Investors Through Integral Technology", "logo": "https://content-media.investing.com/news/Cryptocurrencies_800x533_L_1556528132.jpg", "desc": "Melbourne AU, Palo Alto CA, September 22nd, 2026, Chainwire\nCloudTech Group, a leading blockchain financial infrastructure firm,...", "link": "https://www.investing.com/news/cryptocurrency-news/cloudtech-powers-institutionalgrade-digital-asset-trading-for-australian-investors-through-integral-technology-4909726", "keywords": "CloudTech Powers Institutional-Grade Digital Asset Trading for Australian Investors Through Integral Technology", "summary": "Melbourne AU, Palo Alto CA, September 22nd, 2026, Chainwire\nCloudTech Group, a leading blockchain financial infrastructure firm,...", "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026", "author": "Chainwire", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026"}}, {"id": 13, "title": "XRP Climbs 10% In a Green Day", "logo": "https://content-media.investing.com/news/Ripple_800x533_L_1556445423.jpg", "desc": "Investing.com - XRP was trading at $1.5424 by 17:38 (21:38 GMT) on the Investing.com Index on Monday, up 10.05% on the day. It was...", "link": "https://www.investing.com/news/cryptocurrency-news/xrp-climbs-10-in-a-green-day-4909700", "keywords": "XRP Climbs 10% In a Green Day", "summary": "Investing.com - XRP was trading at $1.5424 by 17:38 (21:38 GMT) on the Investing.com Index on Monday, up 10.05% on the day. It was...", "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026"}}, {"id": 14, "title": "Bitcoin surges to over 7-month high as tokenized-stock move lifts crypto sentiment", "logo": "https://content-media.investing.com/news/moved_LYNXNPEL260TM_L.jpg", "desc": "Investing.com -- Bitcoin on Monday jumped to its highest level since the end of January, extending a rebound after a U.S....", "link": "https://www.investing.com/news/cryptocurrency-news/bitcoin-climbs-toward-82k-as-tokenizedstock-move-boosts-crypto-sentiment-4908305", "keywords": "Bitcoin surges to over 7-month high as tokenized-stock move lifts crypto sentiment", "summary": "Investing.com -- Bitcoin on Monday jumped to its highest level since the end of January, extending a rebound after a U.S....", "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026"}}, {"id": 15, "title": "NOWPayments Releases Cross-Chain Payout Data Revealing Key Performance Benchmarks Across TRON, BNB Chain, and Solana", "logo": "https://content-media.investing.com/news/Cryptocurrencies_800x533_L_1556528104.jpg", "desc": "Tallinn, Estonia, September 21st, 2026, Chainwire\nNOWPayments today published new empirical data analyzing six months of...", "link": "https://www.investing.com/news/cryptocurrency-news/nowpayments-releases-crosschain-payout-data-revealing-key-performance-benchmarks-across-tron-bnb-chain-and-solana-4909411", "keywords": "NOWPayments Releases Cross-Chain Payout Data Revealing Key Performance Benchmarks Across TRON, BNB Chain, and Solana", "summary": "Tallinn, Estonia, September 21st, 2026, Chainwire\nNOWPayments today published new empirical data analyzing six months of...", "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026", "author": "Chainwire", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026"}}, {"id": 16, "title": "CryptoPawn Launches Protocol Integration Allowing Authorized AI Agents to Participate in Crypto-Backed Loan Transactions", "logo": "https://content-media.investing.com/news/CryptoBitcoindigital_800x533_L_1641975060.jpg", "desc": "Johannesburg, South Africa, September 21st, 2026, Chainwire\nCryptoPawn, a Delaware-licensed pawnbroker focused on digital assets,...", "link": "https://www.investing.com/news/cryptocurrency-news/cryptopawn-launches-protocol-integration-allowing-authorized-ai-agents-to-participate-in-cryptobacked-loan-transactions-4909397", "keywords": "CryptoPawn Launches Protocol Integration Allowing Authorized AI Agents to Participate in Crypto-Backed Loan Transactions", "summary": "Johannesburg, South Africa, September 21st, 2026, Chainwire\nCryptoPawn, a Delaware-licensed pawnbroker focused on digital assets,...", "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026", "author": "Chainwire", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026"}}, {"id": 17, "title": "Multi-Asset Trading Venue Monochrome Exchange Announces IEO of Its Native Token, $MCR", "logo": "https://content-media.investing.com/news/apple_800x533_L_1411373495.jpg", "desc": "Sydney, New South Wales, Australia, September 20th, 2026, Chainwire\nMonochrome Exchange, a multi-asset trading platform, has...", "link": "https://www.investing.com/news/cryptocurrency-news/multiasset-trading-venue-monochrome-exchange-announces-ieo-of-its-native-token-mcr-4909333", "keywords": "Multi-Asset Trading Venue Monochrome Exchange Announces IEO of Its Native Token, $MCR", "summary": "Sydney, New South Wales, Australia, September 20th, 2026, Chainwire\nMonochrome Exchange, a multi-asset trading platform, has...", "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026", "author": "Chainwire", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026"}}, {"id": 18, "title": "Litecoin Climbs 10% As Investors Gain Confidence", "logo": "https://content-media.investing.com/news/Litecoin_800x533_L_1637104572.jpg", "desc": "Investing.com - Litecoin was trading at $62.92 by 08:39 (12:39 GMT) on the Investing.com Index on Monday, up 10.07% on the day. It...", "link": "https://www.investing.com/news/cryptocurrency-news/litecoin-climbs-10-as-investors-gain-confidence-4909060", "keywords": "Litecoin Climbs 10% As Investors Gain Confidence", "summary": "Investing.com - Litecoin was trading at $62.92 by 08:39 (12:39 GMT) on the Investing.com Index on Monday, up 10.07% on the day. It...", "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026"}}, {"id": 19, "title": "Cardano Climbs 10% In a Green Day", "logo": "https://content-media.investing.com/news/Cardano_800x533_L_1556444802.jpg", "desc": "Investing.com - Cardano was trading at $0.2445 by 08:24 (12:24 GMT) on the Investing.com Index on Monday, up 10.04% on the day. It...", "link": "https://www.investing.com/news/cryptocurrency-news/cardano-climbs-10-in-a-green-day-4908996", "keywords": "Cardano Climbs 10% In a Green Day", "summary": "Investing.com - Cardano was trading at $0.2445 by 08:24 (12:24 GMT) on the Investing.com Index on Monday, up 10.04% on the day. It...", "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026"}}, {"id": 20, "title": "Strategy buys 950 bitcoin, repurchases STRC shares in weekly update", "logo": "https://content-media.investing.com/news/LYNXMPEE1812S_L.jpg", "desc": "Strategy (MSTR) purchased 950 bitcoin for approximately $75.7 million between September 14 and September 20, 2026, at an average...", "link": "https://www.investing.com/news/cryptocurrency-news/strategy-buys-950-bitcoin-repurchases-strc-shares-in-weekly-update-432SI-4908941", "keywords": "Strategy buys 950 bitcoin, repurchases STRC shares in weekly update", "summary": "Strategy (MSTR) purchased 950 bitcoin for approximately $75.7 million between September 14 and September 20, 2026, at an average...", "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026", "author": "Investing.com", "category_id": 31, "inde_id": 1, "sort": "0", "display": 0, "views": 0, "content": "", "jump_subscription": 0, "white_paper": "", "crawler_id": 0, "banner": null, "category_name": "首页新闻", "lang_name": "英文", "lang_id": 3, "lang": {"id": 3, "name": "英文", "code": "en", "status": 1, "sort": 0}, "category": {"id": 31, "name": "首页新闻", "sorts": 1, "created_at": "Sep 21, 2026", "updated_at": "Sep 21, 2026"}}];
+    const NEWS_LIST_URL = 'https://api.kkjkldskf.cc/api/news/list';
+    const COMPANY_URL = 'https://api.kkjkldskf.cc/api/company/getNewCompany';
+    const KNOB = 40;
+
+    const state = {
+      allNews: [],
+      loading: false,
+      error: '',
+      pendingSearch: '',
+    };
+
+    const els = {
+      main: document.getElementById('main'),
+      searchInput: document.getElementById('searchInput'),
+      searchBtn: document.getElementById('searchBtn'),
+      verifyMask: document.getElementById('verifyMask'),
+      verifyClose: document.getElementById('verifyClose'),
+      track: document.getElementById('track'),
+      trackFill: document.getElementById('trackFill'),
+      trackText: document.getElementById('trackText'),
+      knob: document.getElementById('knob'),
+      messageMask: document.getElementById('messageMask'),
+      messageText: document.getElementById('messageText'),
+      messageOk: document.getElementById('messageOk'),
+    };
+
+    function qsIndex() {
+      const p = new URLSearchParams(location.search);
+      return p.get('index') || '1';
+    }
+
+    function pickString(obj, keys) {
+      for (const k of keys) {
+        const v = obj[k];
+        if (typeof v === 'string' && v.trim()) return v.trim();
+      }
+      return '';
+    }
+
+    function pickNumber(obj, keys) {
+      for (const k of keys) {
+        const v = obj[k];
+        if (typeof v === 'number' && Number.isFinite(v)) return v;
+        if (typeof v === 'string' && v.trim() && !Number.isNaN(Number(v))) return Number(v);
+      }
+      return 0;
+    }
+
+    function formatDate(raw) {
+      if (!raw) return '';
+      if (/^\d+$/.test(raw)) {
+        const n = Number(raw);
+        const ms = raw.length === 10 ? n * 1000 : n;
+        const d = new Date(ms);
+        if (!Number.isNaN(d.getTime())) return padDate(d);
+      }
+      const d = new Date(raw);
+      return Number.isNaN(d.getTime()) ? raw : padDate(d);
+    }
+
+    function padDate(d) {
+      const p = (n) => String(n).padStart(2, '0');
+      return `${p(d.getMonth()+1)}/${p(d.getDate())}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    }
+
+    function placeholder(title) {
+      const label = (title || 'NEWS').slice(0, 8).toUpperCase();
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="124" height="124" viewBox="0 0 124 124"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#427ee8"/><stop offset="100%" stop-color="#16243d"/></linearGradient></defs><rect width="124" height="124" fill="url(#g)"/><rect x="0" y="82" width="124" height="42" fill="rgba(0,0,0,0.38)"/><text x="10" y="106" fill="white" font-size="17" font-family="Arial,sans-serif" font-weight="700">${label}</text></svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    function normalizeList(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload?.list)) return payload.list;
+      if (Array.isArray(payload?.rows)) return payload.rows;
+      if (Array.isArray(payload?.items)) return payload.items;
+      if (payload?.data && !Array.isArray(payload.data)) {
+        if (Array.isArray(payload.data.list)) return payload.data.list;
+        if (Array.isArray(payload.data.rows)) return payload.data.rows;
+        if (Array.isArray(payload.data.data)) return payload.data.data;
+      }
+      return Array.isArray(payload?.data) ? payload.data : [];
+    }
+
+    function mapItem(row, i) {
+      const title = pickString(row, ['title','news_title','post_title','name','subject']) || ('News ' + (i + 1));
+      const publishedAt = formatDate(pickString(row, ['publish_time','published_at','publishedAt','create_time','created_at','createdAt','add_time','date','time']));
+      const image = pickString(row, ['logo','thumbnail','image','img','cover','cover_img','cover_image','pic','picture']) || placeholder(title);
+      return {
+        id: pickNumber(row, ['id','news_id','article_id']) || (i + 1),
+        title,
+        publishedAt: publishedAt || '--',
+        image,
+      };
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function render() {
+      const main = els.main;
+      if (state.loading) {
+        main.innerHTML = '<div class="state">Loading news...</div>';
+        return;
+      }
+      if (state.error) {
+        main.innerHTML = '<div class="state"><p class="state-title">Failed to load news.</p><p class="state-msg">' + escapeHtml(state.error) + '</p><button class="retry-btn" type="button" id="retryBtn">Retry</button></div>';
+        document.getElementById('retryBtn').onclick = loadNews;
+        return;
+      }
+      const list = state.allNews;
+      if (!list.length) {
+        main.innerHTML = '<div class="state">No results found.</div>';
+        return;
+      }
+      main.innerHTML = list.map((item) => (
+        '<article class="card">' +
+          '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.title) + '" />' +
+          '<div><h2 class="card-title">' + escapeHtml(item.title) + '</h2><p class="card-time">' + escapeHtml(item.publishedAt) + '</p></div>' +
+        '</article>'
+      )).join('');
+    }
+
+    async function fetchJson(url) {
+      const res = await fetch(url, { method: 'GET' });
+      const data = await res.json();
+      if (data.code !== 1) throw new Error(data.msg || 'Request failed');
+      return data.data;
+    }
+
+    async function loadNews() {
+      state.loading = true;
+      state.error = '';
+      render();
+      const index = qsIndex();
+      const liveUrl = NEWS_LIST_URL + '?category_id=31&inde_id=' + encodeURIComponent(index) + '&page=2&t=' + Date.now();
+      try {
+        const payload = await fetchJson(liveUrl);
+        state.allNews = normalizeList(payload).map(mapItem);
+      } catch (e) {
+        try {
+          state.allNews = normalizeList({ data: { data: EMBEDDED_NEWS } }).map(mapItem);
+          if (!state.allNews.length) throw e;
+        } catch (_) {
+          state.error = (e && e.message) ? e.message : 'Failed to load news.';
+          state.allNews = [];
+        }
+      } finally {
+        state.loading = false;
+        render();
+      }
+    }
+
+    function showTip(msg) {
+      els.messageText.textContent = msg || 'Failed to load news.';
+      els.messageMask.classList.remove('hidden');
+    }
+
+    function hideTip() { els.messageMask.classList.add('hidden'); }
+
+    function openVerify() {
+      resetVerify();
+      els.verifyMask.classList.remove('hidden');
+    }
+
+    function closeVerify() {
+      els.verifyMask.classList.add('hidden');
+      resetVerify();
+    }
+
+    let dragging = false;
+    let verified = false;
+    let offset = 0;
+    let startX = 0;
+    let startOffset = 0;
+
+    function maxOffset() {
+      const w = els.track.clientWidth || 302;
+      return Math.max(w - KNOB, 0);
+    }
+
+    function applyKnob() {
+      els.knob.style.transform = 'translateX(' + offset + 'px)';
+      els.trackFill.style.width = (offset + KNOB) + 'px';
+    }
+
+    function resetVerify() {
+      dragging = false;
+      verified = false;
+      offset = 0;
+      startX = 0;
+      startOffset = 0;
+      els.trackText.textContent = 'Swiping to the right side';
+      els.trackText.classList.remove('verified');
+      applyKnob();
+    }
+
+    function completeVerify() {
+      verified = true;
+      offset = maxOffset();
+      els.trackText.textContent = 'Verified';
+      els.trackText.classList.add('verified');
+      applyKnob();
+      setTimeout(async () => {
+        closeVerify();
+        try {
+          const name = state.pendingSearch;
+          const url = COMPANY_URL + '?name=' + encodeURIComponent(name) + '&like=1&t=' + Date.now();
+          const rows = await fetchJson(url);
+          if (Array.isArray(rows) && rows.length && rows[0].url) {
+            localStorage.setItem('redirectUrl', rows[0].url);
+            location.href = rows[0].url;
+          }
+        } catch (e) {
+          showTip((e && e.message) ? e.message : 'Request failed');
+        }
+      }, 220);
+    }
+
+    function onSearch() {
+      const text = els.searchInput.value.trim();
+      if (!text) return;
+      state.pendingSearch = text;
+      openVerify();
+    }
+
+    els.searchBtn.addEventListener('click', onSearch);
+    els.searchInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') onSearch(); });
+    els.verifyClose.addEventListener('click', closeVerify);
+    els.messageOk.addEventListener('click', hideTip);
+    els.messageMask.addEventListener('click', (ev) => { if (ev.target === els.messageMask) hideTip(); });
+
+    els.knob.addEventListener('pointerdown', (ev) => {
+      if (verified) return;
+      dragging = true;
+      startX = ev.clientX;
+      startOffset = offset;
+      ev.currentTarget.setPointerCapture?.(ev.pointerId);
+      ev.preventDefault();
+    });
+
+    window.addEventListener('pointermove', (ev) => {
+      if (!dragging || verified) return;
+      offset = Math.min(Math.max(startOffset + ev.clientX - startX, 0), maxOffset());
+      applyKnob();
+      if (offset >= maxOffset()) {
+        dragging = false;
+        completeVerify();
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (!dragging || verified) return;
+      dragging = false;
+      offset = 0;
+      applyKnob();
+    });
+
+    (function init() {
+      const redirect = localStorage.getItem('redirectUrl');
+      const q = location.search || '';
+      if (location.pathname.endsWith('index.html') || location.pathname.endsWith('/')) {
+        history.replaceState(null, '', 'index.html' + q);
+      }
+      if (redirect) {
+        location.href = redirect;
+        return;
+      }
+      loadNews();
+    })();
+  </script>
+</body>
+</html>
