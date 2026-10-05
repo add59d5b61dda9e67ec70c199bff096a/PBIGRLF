@@ -3,13 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover, user-scalable=no" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#2473ea" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title></title>
   <style>
     * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; background: #f5f5f5; }
-    .page { min-height: 100vh; background: linear-gradient(180deg, #2473ea 0 106px, #f5f5f5 106px 100%); }
-    .header { padding: 24px 14px 18px; }
+    :root {
+      --safe-top: constant(safe-area-inset-top);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: constant(safe-area-inset-right);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-left: constant(safe-area-inset-left);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --header-blue: 106px;
+    }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: #2473ea;
+    }
+    .page {
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding-left: var(--safe-left);
+      padding-right: var(--safe-right);
+      background: linear-gradient(
+        180deg,
+        #2473ea 0 calc(var(--header-blue) + var(--safe-top)),
+        #f5f5f5 calc(var(--header-blue) + var(--safe-top)) 100%
+      );
+    }
+    .header {
+      padding: calc(24px + var(--safe-top)) 14px 18px;
+    }
     .search-row { display: grid; grid-template-columns: minmax(0, 1fr) 36px; gap: 8px; align-items: center; }
     .search-input { height: 36px; width: 100%; border: 0; border-radius: 4px; background: #fff; padding: 0 12px; font-size: 14px; color: #111; outline: none; }
     .search-btn { height: 36px; width: 36px; border: 0; border-radius: 4px; background: #fff; color: #111; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
