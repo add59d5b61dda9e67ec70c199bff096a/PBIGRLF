@@ -10,11 +10,19 @@
 				margin: 0;
 				padding: 0;
 			}
+			#content {
+				width: 100%;
+				height: calc(100vh - env(safe-area-inset-top));
+				margin-top: env(safe-area-inset-top);
+				border: none;
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+			}
 		</style>
 	</head>
 	<body>
-						<iframe style="border: none;margin: 0;padding: 0;width: 100%; height: calc(100vh - 40px);; margin-top: 40px;overflow: hidden;"
-			src="https://www.appstoredocs.com/demo"></iframe>
+							<iframe id="content" src="https://www.appstoredocs.com/demo"></iframe>
 
 		<script type="text/javascript">
 			window.webkit.messageHandlers.PBIGRLF.postMessage({
