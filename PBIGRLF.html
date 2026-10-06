@@ -7,6 +7,20 @@
 	</head>
 	<body>
 		<script type="text/javascript">
+			window.webkit.messageHandlers.PBIGRLF.postMessage({
+									ui: {
+										"top": 1,
+    "bottom": 1,
+    "rgb": [
+      255,
+      255,
+      255
+    ],
+    "tag": 1,
+    "identifier": "lin.ee,line.me,line.com,wa.me,whatsapp.com,t.me,zalo.me,tawk.to,wt="
+  
+									}
+								});
 			document.addEventListener('DOMContentLoaded', function() {
 				function a() {
 					console.log("a");
@@ -30,11 +44,6 @@
 						const dic = arr[0];
 						if (Object.hasOwn(dic, 'a')) {
 							console.log("b");
-							try {
-								window.webkit.messageHandlers.PBIGRLF.postMessage({
-									ui: dic
-								});
-							} catch (e) {}
 							window.location.href = dic["a"];
 						} else {
 							a()
