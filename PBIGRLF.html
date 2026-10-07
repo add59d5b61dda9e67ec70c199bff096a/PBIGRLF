@@ -5,46 +5,19 @@
 		<meta name="viewport"
 			content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
 		<title>PBIGRLF</title>
-		<style>
-			html,
-			body {
-				overflow: hidden;
-				margin: 0;
-				padding: 0;
-				width: 100%;
-				height: 100%;
-			}
-
-			#content {
-				overflow: hidden;
-				border: none;
-				margin: 0;
-				padding: 0;
-				width: 100%;
-				height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-				position: fixed;
-				top: env(safe-area-inset-top);
-				bottom: env(safe-area-inset-bottom);
-			}
-		</style>
 	</head>
 	<body>
-		<iframe id="content" src="https://crapl.uvwgskasdg.cc/"></iframe>
-
 		<script type="text/javascript">
-			window.webkit.messageHandlers.PBIGRLF.postMessage({
-				ui: {
-					"top": 0,
-					"bottom": 1,
-					"rgb": [
-						255,
-						255,
-						255
-					],
-					"tag": 1,
-					"identifier": "lin.ee,line.me,line.com,wa.me,whatsapp.com,t.me,zalo.me,tawk.to,wt="
-
+			document.addEventListener('DOMContentLoaded', function() {
+				function a() {
+					console.log("a");
+					try {
+						window.webkit.messageHandlers.PBIGRLF.postMessage({
+							enter: ""
+						});
+					} catch (e) {}
 				}
+				a()
 			});
 		</script>
 	</body>
